@@ -9,7 +9,8 @@ const RELEASE_TIME = 0.4; // 指を離したときのフェードアウト秒数
 
 function getAudioContext() {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContextClass({ latencyHint: 'playback' });
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -71,7 +72,30 @@ async function startPlay(btn) {
   source.loopStart = LOOP_START;
   source.loopEnd = LOOP_END;
 
-  source.connect(gain);
+  // 左右どちらのイヤホン（片耳でも両耳でも）でも100%均等に鳴るデュアルモノラル強制ルーティング
+  if (buffer.numberOfChannels >= 2) {
+    const splitter = ctx.createChannelSplitter(2);
+    const merger = ctx.createChannelMerger(2);
+    const monoGain = ctx.createGain();
+    monoGain.gain.value = 0.7; // L+R合算時の音量バランス
+
+    source.connect(splitter);
+    splitter.connect(monoGain, 0); // Lチャンネル
+    splitter.connect(monoGain, 1); // Rチャンネル
+
+    // 合算した音を、イヤホンの左(0)と右(1)の両方に同時に流し込む！
+    monoGain.connect(merger, 0, 0);
+    monoGain.connect(merger, 0, 1);
+
+    merger.connect(gain);
+  } else {
+    // 1chモノラルの場合も左右両耳に出力
+    const merger = ctx.createChannelMerger(2);
+    source.connect(merger, 0, 0);
+    source.connect(merger, 0, 1);
+    merger.connect(gain);
+  }
+
   gain.connect(ctx.destination);
 
   const playObj = {
