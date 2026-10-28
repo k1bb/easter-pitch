@@ -4,8 +4,11 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  user-select: none;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 html, body {

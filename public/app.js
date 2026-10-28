@@ -105,36 +105,51 @@ function handleRelease(btn) {
   }
 }
 
-// --- Event Listeners ---
+// --- Event Listeners (長押しバイブ・メニュー・選択を完全防止) ---
+window.addEventListener('contextmenu', e => e.preventDefault());
+
 document.querySelectorAll('.btn').forEach(btn => {
-  // 長押し時のコンテキストメニューや選択を防止
   btn.addEventListener('contextmenu', e => e.preventDefault());
 
-  // タッチ・マウスクリック開始（押し下げる）
-  btn.addEventListener('pointerdown', e => {
+  let isTouch = false;
+
+  // スマホ用: touchstart で preventDefault() を呼ぶことで長押しバイブレーションを完全に抑制
+  btn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    isTouch = true;
+    startPlay(btn);
+  }, { passive: false });
+
+  btn.addEventListener('touchend', e => {
+    e.preventDefault();
+    handleRelease(btn);
+  }, { passive: false });
+
+  btn.addEventListener('touchcancel', () => {
+    handleRelease(btn);
+  });
+
+  // PC（マウス）用
+  btn.addEventListener('mousedown', e => {
+    if (isTouch) return;
     e.preventDefault();
     startPlay(btn);
   });
 
-  // 指・マウスを離したとき
-  btn.addEventListener('pointerup', e => {
+  btn.addEventListener('mouseup', e => {
+    if (isTouch) return;
     e.preventDefault();
     handleRelease(btn);
   });
 
-  // ボタンの外に指・カーソルが出たとき
-  btn.addEventListener('pointerleave', e => {
-    e.preventDefault();
-    handleRelease(btn);
-  });
-
-  btn.addEventListener('pointercancel', e => {
+  btn.addEventListener('mouseleave', () => {
+    if (isTouch) return;
     handleRelease(btn);
   });
 });
 
-// PCでボタンの外でマウスを離した場合の安全策
-window.addEventListener('pointerup', () => {
+// PCでボタン外でマウスを離した場合の安全策
+window.addEventListener('mouseup', () => {
   if (currentPlay && currentPlay.isHolding) {
     handleRelease(currentPlay.btn);
   }
