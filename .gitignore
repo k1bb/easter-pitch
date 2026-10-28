@@ -1,0 +1,12 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archives & Temporary
+deploy-package.zip
+*.tmp
+*.wav
+
+# Editor
+.vscode/
+.idea/
