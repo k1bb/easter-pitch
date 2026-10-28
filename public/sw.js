@@ -1,4 +1,4 @@
-const CACHE_NAME = 'easter-choir-v19';
+const CACHE_NAME = 'easter-choir-v21';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -42,26 +42,42 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-  
-  // Cache first with network fallback
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(request).then((networkResponse) => {
-        // Cache new successful GET requests
-        if (request.method === 'GET' && networkResponse && networkResponse.status === 200) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+  const url = new URL(request.url);
+
+  // HTML / JS / CSS は Network First（更新を最優先、圏外ならキャッシュ）
+  const isCode = url.pathname.endsWith('.html') ||
+                 url.pathname.endsWith('.js') ||
+                 url.pathname.endsWith('.css') ||
+                 url.pathname === '/' ||
+                 url.pathname.endsWith('/');
+
+  if (isCode) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(request, { ignoreSearch: true }))
+    );
+  } else {
+    // 音源・画像・フォントは Cache First（高速再生 & オフライン動作）
+    event.respondWith(
+      caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return networkResponse;
-      }).catch(() => {
-        // Fallback for offline if not found
-        return cachedResponse;
-      });
-    })
-  );
+        return fetch(request).then((networkResponse) => {
+          if (request.method === 'GET' && networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return networkResponse;
+        });
+      })
+    );
+  }
 });
