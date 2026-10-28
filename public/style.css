@@ -83,3 +83,26 @@ html, body {
   font-weight: 700;
   box-shadow: 0 0 16px rgba(245, 158, 11, 0.28), inset 0 0 8px rgba(251, 191, 36, 0.15);
 }
+
+/* 画面最下部: 暗闇で邪魔にならない控えめなGitHubリンク */
+.footer {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 1px 0 0 0;
+  line-height: 1;
+}
+
+.footer a {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+  color: #57534e;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  opacity: 0.65;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.footer a:hover, .footer a:active {
+  color: #b47b2b;
+  opacity: 1;
+}
